@@ -4,12 +4,20 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>Family Connect</title>
-    <link rel="icon" type="image/png" href="chat-icon.png" />
+
     <link rel="manifest" href="manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="theme-color" content="#075e54" />
+    <link rel="icon" type="image/png" href="chat-icon.png" />
+    <link rel="apple-touch-icon" href="chat-icon.png" />
+
     <style>
       :root {
         --wa-green: #075e54;
@@ -17,8 +25,16 @@
         --bg-gray: #e5ddd5;
         --blue-tick: #34b7f1;
       }
+
+      /* Mobile-First Reset */
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
       body {
-        font-family: "Segoe UI", sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
         margin: 0;
         background: var(--bg-gray);
         height: 100vh;
@@ -27,21 +43,7 @@
         overflow: hidden;
       }
 
-      /* UI Elements */
-      .status-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 8px;
-      }
-      .online {
-        background: #25d366;
-      }
-      .offline {
-        background: #bbb;
-      }
-
+      /* Responsive Containers */
       #login-screen,
       #lobby-screen {
         position: fixed;
@@ -52,124 +54,133 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        padding: 20px;
       }
       .card {
         background: white;
-        padding: 25px;
-        border-radius: 20px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        width: 90%;
-        max-width: 380px;
+        padding: 30px;
+        border-radius: 24px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
         text-align: center;
       }
 
       .contact-row {
         background: white;
         border-bottom: 1px solid #eee;
-        padding: 18px;
+        padding: 20px;
         display: flex;
         align-items: center;
         cursor: pointer;
-        text-align: left;
+        transition: background 0.2s;
+      }
+      .contact-row:active {
+        background: #f5f5f5;
       }
       .contact-info {
         flex: 1;
         font-weight: 600;
+        font-size: 17px;
       }
 
-      /* Chat Interface */
+      /* Chat Header with Notch Support */
       #chat-interface {
         display: none;
         flex-direction: column;
         height: 100vh;
         background: var(--bg-gray);
         z-index: 50;
+        padding-top: env(safe-area-inset-top);
       }
       #chat-header {
         background: var(--wa-green);
         color: white;
-        padding: 12px 15px;
+        padding: 15px;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        position: sticky;
+        top: 0;
       }
+
       #chat-box {
         flex: 1;
         overflow-y: auto;
         padding: 15px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
         background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
+        background-attachment: fixed;
       }
 
-      #typing-indicator {
-        font-size: 12px;
-        color: #dcf8c6;
-        font-style: italic;
-        display: none;
-        margin-top: 2px;
-      }
-
-      /* Bubbles & Ticks */
+      /* Message Bubbles */
       .msg {
-        padding: 10px;
-        border-radius: 12px;
-        max-width: 75%;
-        font-size: 15px;
+        padding: 12px;
+        border-radius: 16px;
+        max-width: 85%;
+        font-size: 16px;
         position: relative;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        line-height: 1.4;
       }
       .me {
         align-self: flex-end;
         background: var(--light-green);
-        border-top-right-radius: 2px;
+        border-top-right-radius: 4px;
       }
       .them {
         align-self: flex-start;
         background: white;
-        border-top-left-radius: 2px;
+        border-top-left-radius: 4px;
       }
 
       .msg-meta {
-        font-size: 10px;
+        font-size: 11px;
         opacity: 0.6;
         text-align: right;
-        margin-top: 4px;
+        margin-top: 5px;
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        gap: 3px;
+        gap: 4px;
       }
       .tick-blue {
         color: var(--blue-tick);
         font-weight: bold;
       }
 
+      /* Larger Mobile Input Area */
       #input-area {
         background: #f0f0f0;
-        padding: 10px;
+        padding: 12px 10px;
         display: flex;
-        gap: 8px;
+        gap: 10px;
         align-items: center;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
       }
       #msgInput {
         flex: 1;
-        padding: 12px;
-        border-radius: 25px;
+        padding: 14px 18px;
+        border-radius: 30px;
         border: 1px solid #ddd;
         outline: none;
+        font-size: 16px;
       }
       .btn-round {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         border: none;
         cursor: pointer;
+        font-size: 20px;
+        flex-shrink: 0;
       }
+
       .recording {
         background: #ff4b2b !important;
         color: white !important;
@@ -177,21 +188,26 @@
       }
       .logout-btn {
         color: #ff4b2b;
-        font-size: 13px;
+        font-size: 14px;
         cursor: pointer;
-        margin-top: 20px;
+        margin-top: 25px;
         font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
       }
 
       @keyframes pulse {
         0% {
           opacity: 1;
+          scale: 1;
         }
         50% {
-          opacity: 0.5;
+          opacity: 0.7;
+          scale: 1.05;
         }
         100% {
           opacity: 1;
+          scale: 1;
         }
       }
     </style>
@@ -201,38 +217,46 @@
       <div class="card">
         <img
           src="chat-icon.png"
-          width="70"
-          style="border-radius: 15px; margin-bottom: 10px"
+          width="80"
+          style="border-radius: 20px; margin-bottom: 15px"
           onerror="
             this.src = 'https://cdn-icons-png.flaticon.com/512/25/25694.png'
           "
         />
-        <h2 style="color: var(--wa-green)">Family Connect</h2>
+        <h2 style="color: var(--wa-green); margin-bottom: 5px">
+          Family Connect
+        </h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px">
+          Enter your Secret ID to start
+        </p>
         <input
           type="password"
           id="idInput"
-          placeholder="Enter Secret ID"
+          placeholder="Secret ID"
           style="
-            width: 90%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 10px;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 12px;
             border: 1px solid #ddd;
+            font-size: 18px;
+            text-align: center;
           "
         />
         <button
           id="loginBtn"
           style="
             width: 100%;
-            padding: 12px;
+            padding: 15px;
             background: var(--wa-green);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: bold;
+            font-size: 16px;
           "
         >
-          ENTER
+          LOG IN
         </button>
       </div>
     </div>
@@ -240,44 +264,58 @@
     <div id="lobby-screen" style="display: none">
       <div
         class="card"
-        style="padding: 0; overflow: hidden; width: 95%; max-height: 85vh"
+        style="padding: 0; overflow: hidden; width: 100%; height: 90vh"
       >
         <div
           style="
             background: var(--wa-green);
             color: white;
-            padding: 15px;
+            padding: 20px;
             text-align: left;
             display: flex;
             justify-content: space-between;
+            align-items: center;
           "
         >
           <h3 style="margin: 0">Family Hub</h3>
-          <span id="userNameDisp" style="font-size: 12px; opacity: 0.8"></span>
+          <span
+            id="userNameDisp"
+            style="
+              font-size: 13px;
+              background: rgba(255, 255, 255, 0.2);
+              padding: 5px 10px;
+              border-radius: 15px;
+            "
+          ></span>
         </div>
-        <div id="contact-list" style="overflow-y: auto"></div>
-        <div class="logout-btn" onclick="logout()">LOGOUT DEVICE</div>
-        <div style="height: 15px"></div>
+        <div id="contact-list" style="overflow-y: auto; flex: 1"></div>
+        <div class="logout-btn" onclick="logout()">Logout from Device</div>
+        <div style="height: 20px"></div>
       </div>
     </div>
 
     <div id="chat-interface">
       <div id="chat-header">
-        <div style="display: flex; align-items: center; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 12px">
           <button
             onclick="backToLobby()"
             style="
               background: none;
               border: none;
               color: white;
-              font-size: 24px;
+              font-size: 28px;
+              padding: 5px;
             "
           >
             ←
           </button>
           <div>
-            <div id="chat-title" style="font-weight: bold">Chat</div>
-            <div id="typing-indicator">typing...</div>
+            <div id="chat-title" style="font-weight: bold; font-size: 18px">
+              Chat
+            </div>
+            <div id="typing-indicator" style="font-size: 12px; color: #dcf8c6">
+              typing...
+            </div>
           </div>
         </div>
         <button
@@ -286,8 +324,8 @@
             background: none;
             border: none;
             color: white;
-            font-size: 22px;
-            cursor: pointer;
+            font-size: 24px;
+            padding: 5px;
           "
           onclick="handleClear()"
         >
@@ -296,7 +334,7 @@
       </div>
       <div id="chat-box"></div>
       <div id="input-area">
-        <label style="font-size: 22px; cursor: pointer"
+        <label style="font-size: 26px; cursor: pointer; padding: 5px"
           >📎<input
             type="file"
             accept="image/*"
@@ -308,12 +346,13 @@
           id="msgInput"
           placeholder="Message..."
           oninput="updateTypingStatus()"
+          autocomplete="off"
         />
         <button
           id="micBtn"
           class="btn-round"
           onclick="toggleRecording()"
-          style="background: white; font-size: 18px"
+          style="background: white"
         >
           🎙️
         </button>
@@ -383,8 +422,10 @@
       }
 
       window.logout = () => {
-        localStorage.removeItem("fc_id");
-        location.reload();
+        if (confirm("Logout from this device?")) {
+          localStorage.removeItem("fc_id");
+          location.reload();
+        }
       };
 
       function setupStatus() {
@@ -416,7 +457,6 @@
         });
       }
 
-      // --- TYPING INDICATOR ---
       window.updateTypingStatus = () => {
         if (currentRoom === "Family_Group") return;
         update(ref(db, `typing/${currentRoom}`), { [myName]: true });
@@ -441,20 +481,12 @@
         });
       }
 
-      // --- FIXED BROOM FUNCTION (Visible & Working for All) ---
       window.handleClear = () => {
-        if (confirm("🧹 Delete this chat history for everyone?")) {
-          remove(ref(db, `chats/${currentRoom}`))
-            .then(() => {
-              alert("History Cleared.");
-            })
-            .catch((e) => {
-              console.error("Clear failed", e);
-            });
+        if (confirm("🧹 Clear all messages for everyone?")) {
+          remove(ref(db, `chats/${currentRoom}`));
         }
       };
 
-      // --- CHAT LOGIC ---
       window.startChat = (room, title) => {
         currentRoom = room;
         document.getElementById("chat-title").innerText = title;
@@ -475,12 +507,11 @@
               const div = document.createElement("div");
               div.className = `msg ${m.sender === myName ? "me" : "them"}`;
 
-              // FIXED: Rendering for Text, Image, and Voice
               let content = "";
               if (m.type === "image")
-                content = `<img src="${m.data}" style="max-width:100%; border-radius:8px">`;
+                content = `<img src="${m.data}" style="max-width:100%; border-radius:12px">`;
               else if (m.type === "voice")
-                content = `<audio controls src="${m.data}" style="width: 200px; height: 35px;"></audio>`;
+                content = `<audio controls src="${m.data}" style="width: 220px; height: 40px;"></audio>`;
               else content = m.data;
 
               let ticks =
@@ -489,8 +520,7 @@
                     ? `<span class="tick-blue">✓✓</span>`
                     : `<span>✓</span>`
                   : "";
-
-              div.innerHTML = `<b style="font-size:10px">${m.sender}</b><br>${content}<div class="msg-meta">${m.time} ${ticks}</div>`;
+              div.innerHTML = `<b style="font-size:11px; color: ${m.sender === myName ? "#075e54" : "#666"}">${m.sender}</b><br>${content}<div class="msg-meta">${m.time} ${ticks}</div>`;
               box.appendChild(div);
             });
           }
@@ -498,28 +528,32 @@
         });
       };
 
-      // --- VOICE RECORDING RESTORED ---
       window.toggleRecording = async () => {
         const btn = document.getElementById("micBtn");
-        if (!mediaRecorder || mediaRecorder.state === "inactive") {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-          });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-          mediaRecorder.onstop = () => {
-            const blob = new Blob(audioChunks, { type: "audio/webm" });
-            const reader = new FileReader();
-            reader.onloadend = () =>
-              saveMsg({ type: "voice", data: reader.result });
-            reader.readAsDataURL(blob);
-          };
-          mediaRecorder.start();
-          btn.classList.add("recording");
-        } else {
-          mediaRecorder.stop();
-          btn.classList.remove("recording");
+        try {
+          if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+              const blob = new Blob(audioChunks, { type: "audio/webm" });
+              const reader = new FileReader();
+              reader.onloadend = () =>
+                saveMsg({ type: "voice", data: reader.result });
+              reader.readAsDataURL(blob);
+            };
+            mediaRecorder.start();
+            btn.classList.add("recording");
+            if (navigator.vibrate) navigator.vibrate(100);
+          } else {
+            mediaRecorder.stop();
+            btn.classList.remove("recording");
+          }
+        } catch (err) {
+          alert("Microphone access denied.");
         }
       };
 

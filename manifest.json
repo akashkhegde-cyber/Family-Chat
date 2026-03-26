@@ -1,0 +1,21 @@
+{
+  "short_name": "Family",
+  "name": "Family Connect Ultra",
+  "icons": [
+    {
+      "src": "chat-icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "chat-icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "background_color": "#e5ddd5",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#075e54"
+}
