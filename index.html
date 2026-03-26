@@ -7,8 +7,13 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Family Connect Ultra</title>
+
     <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/png" href="chat-icon.png" />
+    <link rel="apple-touch-icon" href="chat-icon.png" />
     <meta name="theme-color" content="#075e54" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
     <style>
       :root {
         --wa-green: #075e54;
@@ -181,6 +186,14 @@
         animation: pulse 1s infinite;
       }
 
+      .logout-btn {
+        color: #ff4b2b;
+        font-size: 12px;
+        cursor: pointer;
+        margin-top: 15px;
+        font-weight: bold;
+      }
+
       @keyframes pulse {
         0% {
           opacity: 1;
@@ -197,10 +210,19 @@
   <body>
     <div id="login-screen">
       <div class="card">
-        <h2 style="color: var(--wa-green)">Family Connect</h2>
-        <input type="password" id="idInput" placeholder="Enter Secret ID" />
+        <img
+          src="chat-icon.png"
+          width="60"
+          style="margin-bottom: 10px; border-radius: 12px"
+          onerror="this.style.display = 'none'"
+        />
+        <h2 style="color: var(--wa-green); margin: 0">Family Connect</h2>
+        <p style="font-size: 12px; color: #666">
+          Enter Secret ID to Enter House
+        </p>
+        <input type="password" id="idInput" placeholder="Secret ID" />
         <button
-          onclick="checkLogin()"
+          id="loginBtn"
           style="
             width: 100%;
             padding: 12px;
@@ -209,9 +231,10 @@
             border: none;
             border-radius: 10px;
             font-weight: bold;
+            cursor: pointer;
           "
         >
-          ENTER HOUSE
+          LOG IN
         </button>
       </div>
     </div>
@@ -219,7 +242,7 @@
     <div id="lobby-screen" style="display: none">
       <div
         class="card"
-        style="padding: 0; overflow: hidden; width: 95%; max-height: 80vh"
+        style="padding: 0; overflow: hidden; width: 95%; max-height: 85vh"
       >
         <div
           style="
@@ -229,15 +252,23 @@
             text-align: left;
             display: flex;
             justify-content: space-between;
+            align-items: center;
           "
         >
           <h3 style="margin: 0">Family Hub</h3>
           <span
             id="my-name-display"
-            style="font-size: 12px; opacity: 0.8"
+            style="
+              font-size: 12px;
+              background: rgba(255, 255, 255, 0.2);
+              padding: 4px 8px;
+              border-radius: 10px;
+            "
           ></span>
         </div>
-        <div id="contact-list" style="overflow-y: auto"></div>
+        <div id="contact-list" style="overflow-y: auto; text-align: left"></div>
+        <div class="logout-btn" onclick="logout()">LOG OUT OF DEVICE</div>
+        <div style="height: 15px"></div>
       </div>
     </div>
 
@@ -292,7 +323,6 @@
         <button
           id="sendBtn"
           class="btn-round"
-          onclick="sendText()"
           style="background: var(--wa-green); color: white"
         >
           ➤
@@ -315,11 +345,11 @@
         limitToLast,
       } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-      // CONFIG: PASTE YOUR FIREBASE DETAILS HERE
       const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        databaseURL: "YOUR_DB_URL",
-        projectId: "YOUR_PROJECT_ID",
+        apiKey: "AIzaSyAV3pyiwrB0Cf4e4RxLyATu-i9qnWzX1kY",
+        databaseURL:
+          "https://sibling-help-app-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "sibling-help-app",
       };
 
       const app = initializeApp(firebaseConfig);
@@ -335,23 +365,40 @@
         mediaRecorder = null,
         audioChunks = [];
 
-      window.checkLogin = () => {
+      // --- PERSISTENT LOGIN CHECK ---
+      window.onload = () => {
+        const savedUser = localStorage.getItem("family_connect_user");
+        if (savedUser && users[savedUser]) {
+          login(users[savedUser]);
+        }
+      };
+
+      // LOGIN CLICK HANDLER
+      document.getElementById("loginBtn").onclick = () => {
         const id = document.getElementById("idInput").value.toUpperCase();
         if (users[id]) {
-          myName = users[id];
-          document.getElementById("my-name-display").innerText = myName;
-          document.getElementById("login-screen").style.display = "none";
-          document.getElementById("lobby-screen").style.display = "flex";
-
-          // --- ADMIN BUTTON LOCK ---
-          if (myName === "Akash") {
-            document.getElementById("admin-clean-btn").style.display = "block";
-          }
-
-          setupStatus();
-          renderLobby();
+          localStorage.setItem("family_connect_user", id); // Save to phone memory
+          login(users[id]);
         } else {
-          alert("Access Denied.");
+          alert("Invalid Secret ID");
+        }
+      };
+
+      function login(userName) {
+        myName = userName;
+        document.getElementById("my-name-display").innerText = myName;
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("lobby-screen").style.display = "flex";
+        if (myName === "Akash")
+          document.getElementById("admin-clean-btn").style.display = "block";
+        setupStatus();
+        renderLobby();
+      }
+
+      window.logout = () => {
+        if (confirm("Logout from this device?")) {
+          localStorage.removeItem("family_connect_user");
+          location.reload();
         }
       };
 
@@ -370,19 +417,14 @@
 
       function renderLobby() {
         const list = document.getElementById("contact-list");
-        list.innerHTML = `<div class="contact-row" onclick="startChat('Family_Group', '🏠 Family Group')">
-                <div class="contact-info">🏠 Family Group</div>
-            </div>`;
-
+        list.innerHTML = `<div class="contact-row" onclick="startChat('Family_Group', '🏠 Family Group')"><div class="contact-info">🏠 Family Group</div></div>`;
         Object.values(users).forEach((u) => {
           if (u !== myName) {
             const row = document.createElement("div");
             row.className = "contact-row";
             row.onclick = () => startChat([myName, u].sort().join("_"), u);
-            row.innerHTML = `<span id="dot-${u}" class="status-dot offline"></span>
-                                    <div class="contact-info">${u}</div>`;
+            row.innerHTML = `<span id="dot-${u}" class="status-dot offline"></span><div class="contact-info">${u}</div>`;
             list.appendChild(row);
-
             onValue(ref(db, `status/${u}`), (s) => {
               const dot = document.getElementById(`dot-${u}`);
               if (dot)
@@ -392,44 +434,42 @@
         });
       }
 
-      // --- THE "FORT KNOX" CLEANER ---
+      // --- SECURITY LOGIC ---
       window.secureClearHistory = () => {
-        // LAYER 1: HARD IDENTITY LOCK
-        if (myName !== "Akash") {
-          alert("Security Error: Only Akash has Admin Clear privileges.");
+        if (
+          myName !== "Akash" ||
+          (!currentRoom.includes("Akash") && currentRoom !== "Family_Group")
+        ) {
+          alert("Security Error: Action Not Allowed.");
           return;
         }
-
-        // LAYER 2: ROOM MEMBERSHIP LOCK
-        // Check if Akash is part of the current room name
-        if (!currentRoom.includes("Akash") && currentRoom !== "Family_Group") {
-          alert(
-            "Restricted: You can only clear your own chats or the Family Group.",
-          );
-          return;
-        }
-
-        // LAYER 3: SECRET ID CHALLENGE
-        const verify = prompt(
-          "ADMIN ACTION: To wipe this chat, enter your Secret ID (A30):",
-        );
-
+        const verify = prompt("ADMIN ACTION: Enter Secret ID (A30) to WIPE:");
         if (verify === "A30") {
-          if (
-            confirm(
-              "Are you sure? This deletes ALL messages for ALL users in this room.",
-            )
-          ) {
-            remove(ref(db, `chats/${currentRoom}`))
-              .then(() => alert("Chat History Wiped! 🧹"))
-              .catch((err) => alert("Wipe failed: " + err.message));
+          if (confirm("Permanently wipe history?")) {
+            remove(ref(db, `chats/${currentRoom}`)).then(() =>
+              alert("Wiped! 🧹"),
+            );
           }
-        } else {
-          alert("Wipe Cancelled: Incorrect ID.");
         }
       };
 
-      // --- VOICE MESSAGES ---
+      // --- CORE CHAT ---
+      window.startChat = (room, title) => {
+        currentRoom = room;
+        document.getElementById("chat-title").innerText = title;
+        document.getElementById("lobby-screen").style.display = "none";
+        document.getElementById("chat-interface").style.display = "flex";
+        listenMessages();
+      };
+
+      document.getElementById("sendBtn").onclick = () => {
+        const t = document.getElementById("msgInput").value.trim();
+        if (t) {
+          saveMsg({ type: "text", data: t });
+          document.getElementById("msgInput").value = "";
+        }
+      };
+
       window.toggleRecording = async () => {
         const btn = document.getElementById("micBtn");
         if (!mediaRecorder || mediaRecorder.state === "inactive") {
@@ -451,22 +491,6 @@
         } else {
           mediaRecorder.stop();
           btn.classList.remove("recording");
-        }
-      };
-
-      window.startChat = (room, title) => {
-        currentRoom = room;
-        document.getElementById("chat-title").innerText = title;
-        document.getElementById("lobby-screen").style.display = "none";
-        document.getElementById("chat-interface").style.display = "flex";
-        listenMessages();
-      };
-
-      window.sendText = () => {
-        const t = document.getElementById("msgInput").value.trim();
-        if (t) {
-          saveMsg({ type: "text", data: t });
-          document.getElementById("msgInput").value = "";
         }
       };
 
@@ -502,7 +526,6 @@
                 const m = data[id];
                 const div = document.createElement("div");
                 div.className = `msg ${m.sender === myName ? "me" : "them"}`;
-
                 let content =
                   m.type === "text"
                     ? m.data
@@ -512,12 +535,7 @@
                 let reacts = m.reactions
                   ? `<div class="reaction-container">${Object.values(m.reactions).join("")}</div>`
                   : "";
-
-                div.innerHTML = `<b style="font-size:10px">${m.sender}</b><br>${content}${reacts}
-                                     <div class="reaction-picker">
-                                        <span onclick="react('${id}','❤️')">❤️</span><span onclick="react('${id}','😂')">😂</span><span onclick="react('${id}','👍')">👍</span>
-                                     </div>`;
-
+                div.innerHTML = `<b style="font-size:10px">${m.sender}</b><br>${content}${reacts}<div class="reaction-picker"><span onclick="react('${id}','❤️')">❤️</span><span onclick="react('${id}','😂')">😂</span><span onclick="react('${id}','👍')">👍</span></div>`;
                 div.onclick = (e) => {
                   e.stopPropagation();
                   const p = div.querySelector(".reaction-picker");
