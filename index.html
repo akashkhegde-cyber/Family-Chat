@@ -27,7 +27,7 @@
         overflow: hidden;
       }
 
-      /* Status & UI */
+      /* UI Elements */
       .status-dot {
         width: 10px;
         height: 10px;
@@ -103,7 +103,6 @@
         background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
       }
 
-      /* Typing Indicator Styling */
       #typing-indicator {
         font-size: 12px;
         color: #dcf8c6;
@@ -171,12 +170,29 @@
         border: none;
         cursor: pointer;
       }
+      .recording {
+        background: #ff4b2b !important;
+        color: white !important;
+        animation: pulse 1s infinite;
+      }
       .logout-btn {
         color: #ff4b2b;
         font-size: 13px;
         cursor: pointer;
         margin-top: 20px;
         font-weight: bold;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
       }
     </style>
   </head>
@@ -266,7 +282,13 @@
         </div>
         <button
           id="clear-btn"
-          style="background: none; border: none; color: white; font-size: 18px"
+          style="
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+          "
           onclick="handleClear()"
         >
           🧹
@@ -288,6 +310,14 @@
           oninput="updateTypingStatus()"
         />
         <button
+          id="micBtn"
+          class="btn-round"
+          onclick="toggleRecording()"
+          style="background: white; font-size: 18px"
+        >
+          🎙️
+        </button>
+        <button
           id="sendBtn"
           class="btn-round"
           style="background: var(--wa-green); color: white"
@@ -307,8 +337,6 @@
         update,
         remove,
         onDisconnect,
-        query,
-        limitToLast,
       } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
       const firebaseConfig = {
@@ -328,7 +356,9 @@
       };
       let myName = "",
         currentRoom = "",
-        typingTimer;
+        typingTimer,
+        mediaRecorder,
+        audioChunks = [];
 
       window.onload = () => {
         const id = localStorage.getItem("fc_id");
@@ -386,7 +416,7 @@
         });
       }
 
-      // --- TYPING INDICATOR LOGIC ---
+      // --- TYPING INDICATOR ---
       window.updateTypingStatus = () => {
         if (currentRoom === "Family_Group") return;
         update(ref(db, `typing/${currentRoom}`), { [myName]: true });
@@ -411,12 +441,16 @@
         });
       }
 
-      // --- BROOM FUNCTION ---
+      // --- FIXED BROOM FUNCTION (Visible & Working for All) ---
       window.handleClear = () => {
-        if (!currentRoom.includes(myName) && currentRoom !== "Family_Group")
-          return;
-        if (confirm("🧹 Wipe this entire chat history for everyone?")) {
-          remove(ref(db, `chats/${currentRoom}`));
+        if (confirm("🧹 Delete this chat history for everyone?")) {
+          remove(ref(db, `chats/${currentRoom}`))
+            .then(() => {
+              alert("History Cleared.");
+            })
+            .catch((e) => {
+              console.error("Clear failed", e);
+            });
         }
       };
 
@@ -426,47 +460,67 @@
         document.getElementById("chat-title").innerText = title;
         document.getElementById("lobby-screen").style.display = "none";
         document.getElementById("chat-interface").style.display = "flex";
-
         listenTyping(room);
 
-        const chatRef = ref(db, `chats/${room}`);
-        onValue(chatRef, (snap) => {
+        onValue(ref(db, `chats/${room}`), (snap) => {
           const box = document.getElementById("chat-box");
           box.innerHTML = "";
           const data = snap.val();
           if (data) {
             Object.keys(data).forEach((msgId) => {
               const m = data[msgId];
-
-              // Mark as seen if it's from someone else
-              if (m.sender !== myName && !m.seen) {
+              if (m.sender !== myName && !m.seen)
                 update(ref(db, `chats/${room}/${msgId}`), { seen: true });
-              }
 
               const div = document.createElement("div");
               div.className = `msg ${m.sender === myName ? "me" : "them"}`;
-              let content =
-                m.type === "image"
-                  ? `<img src="${m.data}" style="max-width:100%; border-radius:8px">`
-                  : m.data;
 
-              // Ticks logic
-              let ticks = "";
-              if (m.sender === myName) {
-                ticks = m.seen
-                  ? `<span class="tick-blue">✓✓</span>`
-                  : `<span>✓</span>`;
-              }
+              // FIXED: Rendering for Text, Image, and Voice
+              let content = "";
+              if (m.type === "image")
+                content = `<img src="${m.data}" style="max-width:100%; border-radius:8px">`;
+              else if (m.type === "voice")
+                content = `<audio controls src="${m.data}" style="width: 200px; height: 35px;"></audio>`;
+              else content = m.data;
 
-              div.innerHTML = `
-                            <b style="font-size:10px">${m.sender}</b><br>${content}
-                            <div class="msg-meta">${m.time} ${ticks}</div>
-                        `;
+              let ticks =
+                m.sender === myName
+                  ? m.seen
+                    ? `<span class="tick-blue">✓✓</span>`
+                    : `<span>✓</span>`
+                  : "";
+
+              div.innerHTML = `<b style="font-size:10px">${m.sender}</b><br>${content}<div class="msg-meta">${m.time} ${ticks}</div>`;
               box.appendChild(div);
             });
           }
           box.scrollTop = box.scrollHeight;
         });
+      };
+
+      // --- VOICE RECORDING RESTORED ---
+      window.toggleRecording = async () => {
+        const btn = document.getElementById("micBtn");
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: "audio/webm" });
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              saveMsg({ type: "voice", data: reader.result });
+            reader.readAsDataURL(blob);
+          };
+          mediaRecorder.start();
+          btn.classList.add("recording");
+        } else {
+          mediaRecorder.stop();
+          btn.classList.remove("recording");
+        }
       };
 
       document.getElementById("sendBtn").onclick = () => {
