@@ -6,15 +6,9 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Family Connect Pro</title>
-
-    <link rel="manifest" href="manifest-chat.json" />
+    <title>Family Connect Ultra</title>
+    <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#075e54" />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>"
-    />
-
     <style>
       :root {
         --wa-green: #075e54;
@@ -26,12 +20,30 @@
         font-family: "Segoe UI", sans-serif;
         margin: 0;
         background: var(--bg-gray);
+        height: 100vh;
         display: flex;
         flex-direction: column;
-        height: 100vh;
         overflow: hidden;
       }
 
+      /* Status Indicators */
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        border: 1px solid white;
+      }
+      .online {
+        background: #25d366;
+        box-shadow: 0 0 5px #25d366;
+      }
+      .offline {
+        background: #bbb;
+      }
+
+      /* Screens */
       #login-screen,
       #lobby-screen {
         position: fixed;
@@ -42,7 +54,6 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 20px;
       }
       .card {
         background: white;
@@ -50,56 +61,33 @@
         border-radius: 20px;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         width: 90%;
-        max-width: 350px;
+        max-width: 380px;
         text-align: center;
       }
 
-      input {
-        width: 90%;
-        padding: 12px;
-        margin: 15px 0;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        font-size: 16px;
-        outline: none;
-      }
-      button {
-        width: 100%;
-        padding: 12px;
-        margin: 8px 0;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 15px;
-      }
-      .btn-primary {
-        background: var(--wa-green);
-        color: white;
-      }
-
+      /* Lobby */
       .contact-row {
         background: white;
         border-bottom: 1px solid #eee;
         padding: 18px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
         cursor: pointer;
+      }
+      .contact-info {
+        flex: 1;
         font-weight: 600;
       }
       .badge {
         background: #25d366;
         color: white;
         border-radius: 50%;
-        min-width: 22px;
-        height: 22px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        min-width: 20px;
+        padding: 2px 6px;
         font-size: 11px;
       }
 
+      /* Chat UI */
       #chat-interface {
         display: none;
         flex-direction: column;
@@ -107,9 +95,8 @@
         width: 100%;
         position: absolute;
         top: 0;
-        left: 0;
-        z-index: 50;
         background: var(--bg-gray);
+        z-index: 50;
       }
       #chat-header {
         background: var(--wa-green);
@@ -117,7 +104,7 @@
         padding: 12px 15px;
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 12px;
       }
       #chat-box {
         flex: 1;
@@ -129,16 +116,15 @@
         background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
       }
 
+      /* Message Bubbles */
       .msg {
-        padding: 10px 14px;
-        border-radius: 14px;
+        padding: 10px;
+        border-radius: 12px;
         max-width: 75%;
         font-size: 15px;
-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
         position: relative;
-        word-wrap: break-word;
-        user-select: none;
-        -webkit-user-select: none;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
       }
       .me {
         align-self: flex-end;
@@ -151,75 +137,131 @@
         border-top-left-radius: 2px;
       }
 
-      .meta {
-        font-size: 10px;
-        text-align: right;
-        opacity: 0.6;
-        margin-top: 5px;
+      /* Reactions */
+      .reaction-container {
+        position: absolute;
+        bottom: -12px;
+        left: 5px;
+        background: white;
+        border-radius: 10px;
+        padding: 1px 4px;
+        font-size: 12px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 4px;
+        gap: 2px;
       }
+      .reaction-picker {
+        position: absolute;
+        top: -45px;
+        left: 0;
+        background: white;
+        padding: 5px;
+        border-radius: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        display: none;
+        gap: 8px;
+        z-index: 60;
+      }
+      .reaction-picker span {
+        cursor: pointer;
+        font-size: 20px;
+        transition: transform 0.1s;
+      }
+      .reaction-picker span:hover {
+        transform: scale(1.3);
+      }
+
+      /* Input Area */
       #input-area {
         background: #f0f0f0;
         padding: 10px;
         display: flex;
-        gap: 10px;
+        gap: 8px;
+        align-items: center;
       }
       #msgInput {
         flex: 1;
-        margin: 0;
+        padding: 12px;
+        border-radius: 25px;
+        border: 1px solid #ddd;
+        outline: none;
       }
-      #sendBtn {
+      .btn-round {
         width: 45px;
         height: 45px;
         border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+      }
+      #micBtn {
+        background: white;
+        color: #555;
+      }
+      #micBtn.recording {
+        background: #ff4b2b;
+        color: white;
+        animation: pulse 1s infinite;
+      }
+      #sendBtn {
         background: var(--wa-green);
         color: white;
-        border: none;
-        font-size: 22px;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      audio {
+        height: 35px;
+        width: 180px;
       }
     </style>
   </head>
   <body>
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("sw.js");
-      }
-    </script>
-
     <div id="login-screen">
       <div class="card">
-        <h2 style="color: var(--wa-green); margin: 0">Family Connect</h2>
+        <h2 style="color: var(--wa-green)">Family Connect</h2>
         <input type="password" id="idInput" placeholder="Enter Secret ID" />
-        <button class="btn-primary" onclick="checkLogin()">Enter House</button>
-        <div style="font-size: 10px; color: #ccc; margin-top: 10px">
-          F10, M20, A30, S40
-        </div>
+        <button
+          onclick="checkLogin()"
+          style="
+            width: 100%;
+            padding: 12px;
+            background: var(--wa-green);
+            color: white;
+            border: none;
+            border-radius: 10px;
+          "
+        >
+          Enter
+        </button>
       </div>
     </div>
 
     <div id="lobby-screen" style="display: none">
-      <div
-        class="card"
-        style="max-width: 450px; width: 95%; padding: 0; overflow: hidden"
-      >
+      <div class="card" style="padding: 0; overflow: hidden; width: 95%">
         <div
           style="
             background: var(--wa-green);
             color: white;
-            padding: 20px;
+            padding: 15px;
             text-align: left;
           "
         >
-          <h3 style="margin: 0">Family Messages</h3>
+          <h3 style="margin: 0">Family Status</h3>
         </div>
-        <div id="group-btn-container"></div>
-        <div
-          id="contact-list"
-          style="max-height: 400px; overflow-y: auto"
-        ></div>
+        <div id="contact-list"></div>
       </div>
     </div>
 
@@ -227,29 +269,26 @@
       <div id="chat-header">
         <button
           onclick="backToLobby()"
-          style="
-            width: auto;
-            background: none;
-            font-size: 24px;
-            color: white;
-            border: none;
-          "
+          style="background: none; border: none; color: white; font-size: 24px"
         >
           ←
         </button>
-        <div>
-          <div id="chat-title" style="font-weight: bold; font-size: 18px">
-            Chat
-          </div>
-          <div style="font-size: 11px; opacity: 0.8">
-            12h Auto-Vanish Active
-          </div>
-        </div>
+        <span id="chat-title" style="font-weight: bold">Chat</span>
       </div>
       <div id="chat-box"></div>
       <div id="input-area">
-        <input type="text" id="msgInput" placeholder="Type a message..." />
-        <button id="sendBtn" onclick="sendMsg()">➤</button>
+        <label style="cursor: pointer; font-size: 22px"
+          >📎<input
+            type="file"
+            accept="image/*"
+            style="display: none"
+            onchange="uploadFile(this, 'image')"
+        /></label>
+        <input type="text" id="msgInput" placeholder="Message" />
+        <button id="micBtn" class="btn-round" onclick="toggleRecording()">
+          🎙️
+        </button>
+        <button id="sendBtn" class="btn-round" onclick="sendText()">➤</button>
       </div>
     </div>
 
@@ -260,11 +299,12 @@
         ref,
         push,
         onValue,
-        query,
-        limitToLast,
         update,
         remove,
-        off,
+        onDisconnect,
+        serverTimestamp,
+        query,
+        limitToLast,
       } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
       const firebaseConfig = {
@@ -276,7 +316,6 @@
 
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
-
       const users = {
         F10: "Father",
         M20: "Mother",
@@ -285,7 +324,8 @@
       };
       let myName = "",
         currentRoom = "",
-        chatListener = null;
+        mediaRecorder = null,
+        audioChunks = [];
 
       window.checkLogin = () => {
         const id = document.getElementById("idInput").value.toUpperCase();
@@ -293,71 +333,104 @@
           myName = users[id];
           document.getElementById("login-screen").style.display = "none";
           document.getElementById("lobby-screen").style.display = "flex";
+          setupStatus();
           renderLobby();
-        } else {
-          alert("ID not recognized.");
         }
       };
 
+      // --- STATUS SYSTEM ---
+      function setupStatus() {
+        const myStatusRef = ref(db, `status/${myName}`);
+        const connectedRef = ref(db, ".info/connected");
+        onValue(connectedRef, (snap) => {
+          if (snap.val() === true) {
+            onDisconnect(myStatusRef).set("offline");
+            update(myStatusRef, {
+              state: "online",
+              lastSeen: serverTimestamp(),
+            });
+          }
+        });
+      }
+
       function renderLobby() {
         const list = document.getElementById("contact-list");
-        const groupContainer = document.getElementById("group-btn-container");
-        list.innerHTML = "";
-        groupContainer.innerHTML = "";
+        list.innerHTML = `<div class="contact-row" onclick="startChat('Family_Group', '🏠 Family Group')">
+                <div class="contact-info">🏠 Family Group</div>
+            </div>`;
 
-        createContactRow(groupContainer, "Family_Group", "🏠 Family Group");
         Object.values(users).forEach((u) => {
           if (u !== myName) {
-            const room = [myName, u].sort().join("_");
-            createContactRow(list, room, u);
-          }
-        });
-      }
+            const row = document.createElement("div");
+            row.className = "contact-row";
+            row.onclick = () => startChat([myName, u].sort().join("_"), u);
+            row.innerHTML = `<span id="dot-${u}" class="status-dot offline"></span>
+                                    <div class="contact-info">${u}</div>
+                                    <span id="badge-${u}" class="badge" style="display:none">0</span>`;
+            list.appendChild(row);
 
-      function createContactRow(container, room, title) {
-        const div = document.createElement("div");
-        div.className = "contact-row";
-        div.innerHTML = `<span>${title}</span><span id="badge-${room}" class="badge" style="display:none">0</span>`;
-        div.onclick = () => startChat(room, title);
-        container.appendChild(div);
-
-        onValue(ref(db, `chats/${room}`), (snap) => {
-          const data = snap.val();
-          let unread = 0;
-          if (data)
-            Object.values(data).forEach((m) => {
-              if (m.sender !== myName && m.seen === false) unread++;
+            onValue(ref(db, `status/${u}`), (s) => {
+              const dot = document.getElementById(`dot-${u}`);
+              if (s.val()?.state === "online")
+                dot.className = "status-dot online";
+              else dot.className = "status-dot offline";
             });
-          const badge = document.getElementById(`badge-${room}`);
-          if (unread > 0) {
-            badge.innerText = unread;
-            badge.style.display = "flex";
-          } else {
-            badge.style.display = "none";
           }
         });
       }
 
+      // --- VOICE MESSAGES ---
+      window.toggleRecording = async () => {
+        const btn = document.getElementById("micBtn");
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: "audio/webm" });
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              saveMsg({ type: "voice", data: reader.result });
+            reader.readAsDataURL(blob);
+          };
+          mediaRecorder.start();
+          btn.classList.add("recording");
+        } else {
+          mediaRecorder.stop();
+          btn.classList.remove("recording");
+        }
+      };
+
+      // --- CORE CHAT ---
       window.startChat = (room, title) => {
         currentRoom = room;
         document.getElementById("chat-title").innerText = title;
         document.getElementById("lobby-screen").style.display = "none";
         document.getElementById("chat-interface").style.display = "flex";
-        listenForMessages();
+        listenMessages();
       };
 
-      window.backToLobby = () => {
-        if (chatListener) off(ref(db, `chats/${currentRoom}`));
-        document.getElementById("chat-interface").style.display = "none";
-        document.getElementById("lobby-screen").style.display = "flex";
+      window.sendText = () => {
+        const t = document.getElementById("msgInput").value.trim();
+        if (t) {
+          saveMsg({ type: "text", data: t });
+          document.getElementById("msgInput").value = "";
+        }
       };
 
-      window.sendMsg = () => {
-        const text = document.getElementById("msgInput").value.trim();
-        if (!text) return;
+      window.uploadFile = (input, type) => {
+        const reader = new FileReader();
+        reader.onload = (e) => saveMsg({ type: type, data: e.target.result });
+        reader.readAsDataURL(input.files[0]);
+      };
+
+      function saveMsg(m) {
         push(ref(db, `chats/${currentRoom}`), {
+          ...m,
           sender: myName,
-          text: text,
           time: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -365,73 +438,61 @@
           timestamp: Date.now(),
           seen: false,
         });
-        document.getElementById("msgInput").value = "";
-        if (navigator.vibrate) navigator.vibrate(40);
-      };
+      }
 
-      function listenForMessages() {
-        const chatBox = document.getElementById("chat-box");
-        const twelveHours = 12 * 60 * 60 * 1000;
-        const now = Date.now();
-
-        chatListener = onValue(
-          query(ref(db, `chats/${currentRoom}`), limitToLast(50)),
+      function listenMessages() {
+        const box = document.getElementById("chat-box");
+        onValue(
+          query(ref(db, `chats/${currentRoom}`), limitToLast(30)),
           (snap) => {
-            chatBox.innerHTML = "";
+            box.innerHTML = "";
             const data = snap.val();
-            if (data) {
-              Object.keys(data).forEach((key) => {
-                const m = data[key];
-
-                if (m.timestamp && now - m.timestamp > twelveHours) {
-                  remove(ref(db, `chats/${currentRoom}/${key}`));
-                  return;
-                }
-
-                if (m.sender !== myName && !m.seen)
-                  update(ref(db, `chats/${currentRoom}/${key}`), {
-                    seen: true,
-                  });
-
+            if (data)
+              Object.keys(data).forEach((id) => {
+                const m = data[id];
                 const div = document.createElement("div");
                 div.className = `msg ${m.sender === myName ? "me" : "them"}`;
 
-                if (m.sender === myName) {
-                  div.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    if (confirm("Delete for everyone?"))
-                      remove(ref(db, `chats/${currentRoom}/${key}`));
-                  };
-                }
+                // Add Reactions to UI
+                let reactionHtml = m.reactions
+                  ? `<div class="reaction-container">${Object.values(m.reactions).join("")}</div>`
+                  : "";
 
-                let ticks =
-                  m.sender === myName
-                    ? m.seen
-                      ? '<span style="color:var(--blue-tick)">✓✓</span>'
-                      : "<span>✓</span>"
-                    : "";
-                div.innerHTML = `<b style="font-size:10px; color:${getSenderColor(m.sender)}">${m.sender}</b><br>${m.text}<div class="meta">${m.time} ${ticks}</div>`;
-                chatBox.appendChild(div);
+                let content =
+                  m.type === "text"
+                    ? m.data
+                    : m.type === "image"
+                      ? `<img src="${m.data}" style="max-width:100%; border-radius:8px">`
+                      : `<audio controls src="${m.data}"></audio>`;
+
+                div.innerHTML = `<b style="font-size:10px">${m.sender}</b><br>${content}${reactionHtml}
+                                     <div class="reaction-picker">
+                                        <span onclick="react('${id}','❤️')">❤️</span><span onclick="react('${id}','😂')">😂</span><span onclick="react('${id}','👍')">👍</span>
+                                     </div>`;
+
+                div.onclick = () => {
+                  const picker = div.querySelector(".reaction-picker");
+                  picker.style.display =
+                    picker.style.display === "flex" ? "none" : "flex";
+                };
+
+                box.appendChild(div);
               });
-              chatBox.scrollTop = chatBox.scrollHeight;
-            }
+            box.scrollTop = box.scrollHeight;
           },
         );
       }
 
-      function getSenderColor(name) {
-        const colors = {
-          Father: "#3498db",
-          Mother: "#e74c3c",
-          Akash: "#9b59b6",
-          Aishwarya: "#f39c12",
-        };
-        return colors[name] || "#333";
-      }
+      window.react = (msgId, emoji) => {
+        update(ref(db, `chats/${currentRoom}/${msgId}/reactions`), {
+          [myName]: emoji,
+        });
+      };
 
-      document.getElementById("msgInput").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendMsg();
-      });
+      window.backToLobby = () => {
+        document.getElementById("chat-interface").style.display = "none";
+        document.getElementById("lobby-screen").style.display = "flex";
+      };
     </script>
   </body>
 </html>
