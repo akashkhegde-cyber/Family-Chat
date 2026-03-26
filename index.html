@@ -6,18 +6,10 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>Family Connect</title>
-
+    <title>Family Connect Pro</title>
     <link rel="manifest" href="manifest.json" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
     <meta name="theme-color" content="#075e54" />
     <link rel="icon" type="image/png" href="chat-icon.png" />
-    <link rel="apple-touch-icon" href="chat-icon.png" />
-
     <style>
       :root {
         --wa-green: #075e54;
@@ -25,16 +17,12 @@
         --bg-gray: #e5ddd5;
         --blue-tick: #34b7f1;
       }
-
-      /* Mobile-First Reset */
       * {
         box-sizing: border-box;
         -webkit-tap-highlight-color: transparent;
       }
       body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-          Arial, sans-serif;
+        font-family: -apple-system, sans-serif;
         margin: 0;
         background: var(--bg-gray);
         height: 100vh;
@@ -43,15 +31,13 @@
         overflow: hidden;
       }
 
-      /* Responsive Containers */
-      #login-screen,
-      #lobby-screen {
+      /* Login Screens */
+      #auth-container {
         position: fixed;
         inset: 0;
         background: #f0f2f5;
         z-index: 100;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 20px;
@@ -65,7 +51,33 @@
         max-width: 400px;
         text-align: center;
       }
+      input {
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        font-size: 18px;
+        text-align: center;
+      }
+      .btn-main {
+        width: 100%;
+        padding: 15px;
+        background: var(--wa-green);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: bold;
+        cursor: pointer;
+      }
 
+      /* Chat UI */
+      #lobby-screen,
+      #chat-interface {
+        display: none;
+        height: 100vh;
+        flex-direction: column;
+      }
       .contact-row {
         background: white;
         border-bottom: 1px solid #eee;
@@ -73,25 +85,6 @@
         display: flex;
         align-items: center;
         cursor: pointer;
-        transition: background 0.2s;
-      }
-      .contact-row:active {
-        background: #f5f5f5;
-      }
-      .contact-info {
-        flex: 1;
-        font-weight: 600;
-        font-size: 17px;
-      }
-
-      /* Chat Header with Notch Support */
-      #chat-interface {
-        display: none;
-        flex-direction: column;
-        height: 100vh;
-        background: var(--bg-gray);
-        z-index: 50;
-        padding-top: env(safe-area-inset-top);
       }
       #chat-header {
         background: var(--wa-green);
@@ -100,10 +93,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        position: sticky;
-        top: 0;
+        padding-top: env(safe-area-inset-top);
       }
-
       #chat-box {
         flex: 1;
         overflow-y: auto;
@@ -112,10 +103,8 @@
         flex-direction: column;
         gap: 12px;
         background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
-        background-attachment: fixed;
       }
 
-      /* Message Bubbles */
       .msg {
         padding: 12px;
         border-radius: 16px;
@@ -123,7 +112,6 @@
         font-size: 16px;
         position: relative;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-        line-height: 1.4;
       }
       .me {
         align-self: flex-end;
@@ -135,7 +123,6 @@
         background: white;
         border-top-left-radius: 4px;
       }
-
       .msg-meta {
         font-size: 11px;
         opacity: 0.6;
@@ -146,198 +133,106 @@
         justify-content: flex-end;
         gap: 4px;
       }
-      .tick-blue {
-        color: var(--blue-tick);
-        font-weight: bold;
-      }
 
-      /* Larger Mobile Input Area */
       #input-area {
         background: #f0f0f0;
-        padding: 12px 10px;
+        padding: 12px;
         display: flex;
         gap: 10px;
         align-items: center;
         padding-bottom: calc(12px + env(safe-area-inset-bottom));
       }
-      #msgInput {
-        flex: 1;
-        padding: 14px 18px;
-        border-radius: 30px;
-        border: 1px solid #ddd;
-        outline: none;
-        font-size: 16px;
-      }
       .btn-round {
         width: 48px;
         height: 48px;
         border-radius: 50%;
+        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: none;
         cursor: pointer;
-        font-size: 20px;
-        flex-shrink: 0;
       }
-
       .recording {
         background: #ff4b2b !important;
-        color: white !important;
-        animation: pulse 1s infinite;
-      }
-      .logout-btn {
-        color: #ff4b2b;
-        font-size: 14px;
-        cursor: pointer;
-        margin-top: 25px;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-
-      @keyframes pulse {
-        0% {
-          opacity: 1;
-          scale: 1;
-        }
-        50% {
-          opacity: 0.7;
-          scale: 1.05;
-        }
-        100% {
-          opacity: 1;
-          scale: 1;
-        }
+        color: white;
       }
     </style>
   </head>
   <body>
-    <div id="login-screen">
-      <div class="card">
+    <div id="auth-container">
+      <div id="step-id" class="card">
         <img
           src="chat-icon.png"
           width="80"
           style="border-radius: 20px; margin-bottom: 15px"
-          onerror="
-            this.src = 'https://cdn-icons-png.flaticon.com/512/25/25694.png'
-          "
         />
-        <h2 style="color: var(--wa-green); margin-bottom: 5px">
-          Family Connect
-        </h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 20px">
-          Enter your Secret ID to start
-        </p>
+        <h2 style="color: var(--wa-green)">Family Connect</h2>
+        <input type="password" id="idInput" placeholder="Secret ID" />
+        <button class="btn-main" onclick="checkID()">CONTINUE</button>
+      </div>
+
+      <div id="step-pin" class="card" style="display: none">
+        <h2 id="pin-title">Secure Login</h2>
+        <p id="pin-subtext" style="font-size: 14px; color: #666"></p>
         <input
-          type="password"
-          id="idInput"
-          placeholder="Secret ID"
-          style="
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            font-size: 18px;
-            text-align: center;
-          "
+          type="number"
+          id="pinInput"
+          placeholder="4-Digit PIN"
+          pattern="\d*"
+          inputmode="numeric"
         />
-        <button
-          id="loginBtn"
-          style="
-            width: 100%;
-            padding: 15px;
-            background: var(--wa-green);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 16px;
-          "
-        >
-          LOG IN
-        </button>
+        <button class="btn-main" onclick="verifyPin()">LOG IN</button>
       </div>
     </div>
 
-    <div id="lobby-screen" style="display: none">
-      <div
-        class="card"
-        style="padding: 0; overflow: hidden; width: 100%; height: 90vh"
-      >
-        <div
-          style="
-            background: var(--wa-green);
-            color: white;
-            padding: 20px;
-            text-align: left;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          "
-        >
-          <h3 style="margin: 0">Family Hub</h3>
-          <span
-            id="userNameDisp"
-            style="
-              font-size: 13px;
-              background: rgba(255, 255, 255, 0.2);
-              padding: 5px 10px;
-              border-radius: 15px;
-            "
-          ></span>
-        </div>
-        <div id="contact-list" style="overflow-y: auto; flex: 1"></div>
-        <div class="logout-btn" onclick="logout()">Logout from Device</div>
-        <div style="height: 20px"></div>
+    <div id="lobby-screen">
+      <div style="background: var(--wa-green); color: white; padding: 20px">
+        <h3 style="margin: 0">Family Hub</h3>
       </div>
+      <div
+        id="contact-list"
+        style="flex: 1; overflow-y: auto; background: white"
+      ></div>
+      <button
+        onclick="logout()"
+        style="
+          padding: 15px;
+          color: red;
+          border: none;
+          background: none;
+          font-weight: bold;
+        "
+      >
+        LOGOUT DEVICE
+      </button>
     </div>
 
     <div id="chat-interface">
       <div id="chat-header">
-        <div style="display: flex; align-items: center; gap: 12px">
-          <button
-            onclick="backToLobby()"
-            style="
-              background: none;
-              border: none;
-              color: white;
-              font-size: 28px;
-              padding: 5px;
-            "
-          >
-            ←
-          </button>
-          <div>
-            <div id="chat-title" style="font-weight: bold; font-size: 18px">
-              Chat
-            </div>
-            <div id="typing-indicator" style="font-size: 12px; color: #dcf8c6">
-              typing...
-            </div>
+        <button
+          onclick="backToLobby()"
+          style="background: none; border: none; color: white; font-size: 24px"
+        >
+          ←
+        </button>
+        <div style="text-align: center">
+          <b id="chat-title">Chat</b>
+          <div id="typing-indicator" style="font-size: 10px; display: none">
+            typing...
           </div>
         </div>
         <button
-          id="clear-btn"
-          style="
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            padding: 5px;
-          "
           onclick="handleClear()"
+          style="background: none; border: none; color: white; font-size: 24px"
         >
           🧹
         </button>
       </div>
       <div id="chat-box"></div>
       <div id="input-area">
-        <label style="font-size: 26px; cursor: pointer; padding: 5px"
+        <label style="font-size: 24px"
           >📎<input
             type="file"
-            accept="image/*"
             style="display: none"
             onchange="uploadFile(this)"
         /></label>
@@ -346,14 +241,8 @@
           id="msgInput"
           placeholder="Message..."
           oninput="updateTypingStatus()"
-          autocomplete="off"
         />
-        <button
-          id="micBtn"
-          class="btn-round"
-          onclick="toggleRecording()"
-          style="background: white"
-        >
+        <button id="micBtn" class="btn-round" onclick="toggleRecording()">
           🎙️
         </button>
         <button
@@ -376,6 +265,7 @@
         update,
         remove,
         onDisconnect,
+        get,
       } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
       const firebaseConfig = {
@@ -395,200 +285,182 @@
       };
       let myName = "",
         currentRoom = "",
-        typingTimer,
+        tempID = "",
         mediaRecorder,
         audioChunks = [];
 
+      // Check persistent login
       window.onload = () => {
-        const id = localStorage.getItem("fc_id");
-        if (id && users[id]) login(users[id]);
+        const savedID = localStorage.getItem("fc_id");
+        const savedPin = localStorage.getItem("fc_pin");
+        if (savedID && savedPin) {
+          tempID = savedID;
+          verifyPin(savedPin);
+        }
       };
 
-      document.getElementById("loginBtn").onclick = () => {
+      window.checkID = async () => {
         const id = document.getElementById("idInput").value.toUpperCase();
-        if (users[id]) {
-          localStorage.setItem("fc_id", id);
-          login(users[id]);
-        } else alert("Invalid ID");
+        if (!users[id]) return alert("Invalid ID");
+        tempID = id;
+
+        const snapshot = await get(ref(db, `pins/${id}`));
+        const hasPin = snapshot.exists();
+
+        document.getElementById("step-id").style.display = "none";
+        document.getElementById("step-pin").style.display = "block";
+        document.getElementById("pin-title").innerText = hasPin
+          ? "Enter PIN"
+          : "Setup PIN";
+        document.getElementById("pin-subtext").innerText = hasPin
+          ? `Enter PIN for ${users[id]}`
+          : `Create a 4-digit PIN for ${users[id]}`;
       };
 
-      function login(u) {
-        myName = u;
-        document.getElementById("userNameDisp").innerText = u;
-        document.getElementById("login-screen").style.display = "none";
+      window.verifyPin = async (providedPin) => {
+        const pin = providedPin || document.getElementById("pinInput").value;
+        if (pin.length < 4) return alert("PIN must be 4 digits");
+
+        const pinRef = ref(db, `pins/${tempID}`);
+        const snapshot = await get(pinRef);
+
+        if (!snapshot.exists()) {
+          await update(ref(db, `pins`), { [tempID]: pin });
+          proceedLogin(pin);
+        } else if (snapshot.val() === pin) {
+          proceedLogin(pin);
+        } else {
+          alert("Incorrect PIN!");
+        }
+      };
+
+      function proceedLogin(pin) {
+        localStorage.setItem("fc_id", tempID);
+        localStorage.setItem("fc_pin", pin);
+        myName = users[tempID];
+        document.getElementById("auth-container").style.display = "none";
         document.getElementById("lobby-screen").style.display = "flex";
         setupStatus();
         renderLobby();
       }
 
-      window.logout = () => {
-        if (confirm("Logout from this device?")) {
-          localStorage.removeItem("fc_id");
-          location.reload();
-        }
-      };
-
+      // --- REST OF THE APP LOGIC (Lobby, Chat, Broom, Voice) ---
       function setupStatus() {
-        const statusRef = ref(db, `status/${myName}`);
-        onValue(ref(db, ".info/connected"), (snap) => {
-          if (snap.val()) {
-            onDisconnect(statusRef).set({ state: "offline" });
-            update(statusRef, { state: "online" });
+        const sRef = ref(db, `status/${myName}`);
+        onValue(ref(db, ".info/connected"), (s) => {
+          if (s.val()) {
+            onDisconnect(sRef).set({ state: "offline" });
+            update(sRef, { state: "online" });
           }
         });
       }
 
       function renderLobby() {
         const list = document.getElementById("contact-list");
-        list.innerHTML = `<div class="contact-row" onclick="startChat('Family_Group', '🏠 Family Group')"><div class="contact-info">🏠 Family Group</div></div>`;
+        list.innerHTML = `<div class="contact-row" onclick="startChat('Family_Group', '🏠 Family Group')">🏠 Family Group</div>`;
         Object.values(users).forEach((u) => {
           if (u !== myName) {
             const row = document.createElement("div");
             row.className = "contact-row";
             row.onclick = () => startChat([myName, u].sort().join("_"), u);
-            row.innerHTML = `<span id="dot-${u}" class="status-dot offline"></span><div class="contact-info">${u}</div>`;
+            row.innerHTML = `<span id="dot-${u}" style="width:10px;height:10px;border-radius:50%;margin-right:10px;background:#bbb;"></span>${u}`;
             list.appendChild(row);
             onValue(ref(db, `status/${u}`), (s) => {
               const d = document.getElementById(`dot-${u}`);
               if (d)
-                d.className = `status-dot ${s.val()?.state === "online" ? "online" : "offline"}`;
+                d.style.background =
+                  s.val()?.state === "online" ? "#25d366" : "#bbb";
             });
           }
         });
       }
-
-      window.updateTypingStatus = () => {
-        if (currentRoom === "Family_Group") return;
-        update(ref(db, `typing/${currentRoom}`), { [myName]: true });
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => {
-          update(ref(db, `typing/${currentRoom}`), { [myName]: false });
-        }, 2000);
-      };
-
-      function listenTyping(room) {
-        const indicator = document.getElementById("typing-indicator");
-        onValue(ref(db, `typing/${room}`), (snap) => {
-          const data = snap.val();
-          let typingUser = "";
-          if (data) {
-            Object.keys(data).forEach((user) => {
-              if (user !== myName && data[user] === true) typingUser = user;
-            });
-          }
-          indicator.innerText = typingUser ? `${typingUser} is typing...` : "";
-          indicator.style.display = typingUser ? "block" : "none";
-        });
-      }
-
-      window.handleClear = () => {
-        if (confirm("🧹 Clear all messages for everyone?")) {
-          remove(ref(db, `chats/${currentRoom}`));
-        }
-      };
 
       window.startChat = (room, title) => {
         currentRoom = room;
         document.getElementById("chat-title").innerText = title;
         document.getElementById("lobby-screen").style.display = "none";
         document.getElementById("chat-interface").style.display = "flex";
-        listenTyping(room);
-
         onValue(ref(db, `chats/${room}`), (snap) => {
           const box = document.getElementById("chat-box");
           box.innerHTML = "";
           const data = snap.val();
-          if (data) {
-            Object.keys(data).forEach((msgId) => {
-              const m = data[msgId];
+          if (data)
+            Object.keys(data).forEach((id) => {
+              const m = data[id];
               if (m.sender !== myName && !m.seen)
-                update(ref(db, `chats/${room}/${msgId}`), { seen: true });
-
+                update(ref(db, `chats/${room}/${id}`), { seen: true });
               const div = document.createElement("div");
               div.className = `msg ${m.sender === myName ? "me" : "them"}`;
-
-              let content = "";
-              if (m.type === "image")
-                content = `<img src="${m.data}" style="max-width:100%; border-radius:12px">`;
-              else if (m.type === "voice")
-                content = `<audio controls src="${m.data}" style="width: 220px; height: 40px;"></audio>`;
-              else content = m.data;
-
-              let ticks =
-                m.sender === myName
-                  ? m.seen
-                    ? `<span class="tick-blue">✓✓</span>`
-                    : `<span>✓</span>`
-                  : "";
-              div.innerHTML = `<b style="font-size:11px; color: ${m.sender === myName ? "#075e54" : "#666"}">${m.sender}</b><br>${content}<div class="msg-meta">${m.time} ${ticks}</div>`;
+              let content =
+                m.type === "image"
+                  ? `<img src="${m.data}" style="width:100%; border-radius:8px">`
+                  : m.type === "voice"
+                    ? `<audio controls src="${m.data}" style="width:200px"></audio>`
+                    : m.data;
+              let ticks = m.sender === myName ? (m.seen ? "✓✓" : "✓") : "";
+              div.innerHTML = `<small>${m.sender}</small><br>${content}<div class="msg-meta">${m.time} ${ticks}</div>`;
               box.appendChild(div);
             });
-          }
           box.scrollTop = box.scrollHeight;
         });
       };
 
-      window.toggleRecording = async () => {
-        const btn = document.getElementById("micBtn");
-        try {
-          if (!mediaRecorder || mediaRecorder.state === "inactive") {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
-            });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-            mediaRecorder.onstop = () => {
-              const blob = new Blob(audioChunks, { type: "audio/webm" });
-              const reader = new FileReader();
-              reader.onloadend = () =>
-                saveMsg({ type: "voice", data: reader.result });
-              reader.readAsDataURL(blob);
-            };
-            mediaRecorder.start();
-            btn.classList.add("recording");
-            if (navigator.vibrate) navigator.vibrate(100);
-          } else {
-            mediaRecorder.stop();
-            btn.classList.remove("recording");
-          }
-        } catch (err) {
-          alert("Microphone access denied.");
-        }
+      window.handleClear = () => {
+        if (confirm("🧹 Clear history?"))
+          remove(ref(db, `chats/${currentRoom}`));
       };
-
-      document.getElementById("sendBtn").onclick = () => {
-        const t = document.getElementById("msgInput").value.trim();
-        if (t) {
-          saveMsg({ type: "text", data: t });
-          document.getElementById("msgInput").value = "";
-          update(ref(db, `typing/${currentRoom}`), { [myName]: false });
-        }
-      };
-
-      window.uploadFile = (i) => {
-        const r = new FileReader();
-        r.onload = (e) => saveMsg({ type: "image", data: e.target.result });
-        r.readAsDataURL(i.files[0]);
-      };
-
-      function saveMsg(m) {
-        push(ref(db, `chats/${currentRoom}`), {
-          ...m,
-          sender: myName,
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          seen: false,
-        });
-        if (navigator.vibrate) navigator.vibrate(40);
-      }
-
       window.backToLobby = () => {
         document.getElementById("chat-interface").style.display = "none";
         document.getElementById("lobby-screen").style.display = "flex";
       };
+      window.logout = () => {
+        localStorage.clear();
+        location.reload();
+      };
+
+      // Send Logic
+      document.getElementById("sendBtn").onclick = () => {
+        const val = document.getElementById("msgInput").value;
+        if (val) {
+          saveMsg({ type: "text", data: val });
+          document.getElementById("msgInput").value = "";
+        }
+      };
+
+      window.toggleRecording = async () => {
+        const btn = document.getElementById("micBtn");
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              saveMsg({ type: "voice", data: reader.result });
+            reader.readAsDataURL(new Blob(audioChunks));
+          };
+          mediaRecorder.start();
+          btn.classList.add("recording");
+        } else {
+          mediaRecorder.stop();
+          btn.classList.remove("recording");
+        }
+      };
+
+      function saveMsg(obj) {
+        push(ref(db, `chats/${currentRoom}`), {
+          ...obj,
+          sender: myName,
+          seen: false,
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        });
+      }
     </script>
   </body>
 </html>
