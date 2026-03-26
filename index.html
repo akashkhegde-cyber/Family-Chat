@@ -26,7 +26,7 @@
         overflow: hidden;
       }
 
-      /* Status Indicators */
+      /* Status */
       .status-dot {
         width: 10px;
         height: 10px;
@@ -65,7 +65,6 @@
         text-align: center;
       }
 
-      /* Lobby */
       .contact-row {
         background: white;
         border-bottom: 1px solid #eee;
@@ -77,14 +76,6 @@
       .contact-info {
         flex: 1;
         font-weight: 600;
-      }
-      .badge {
-        background: #25d366;
-        color: white;
-        border-radius: 50%;
-        min-width: 20px;
-        padding: 2px 6px;
-        font-size: 11px;
       }
 
       /* Chat UI */
@@ -104,7 +95,7 @@
         padding: 12px 15px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        justify-content: space-between;
       }
       #chat-box {
         flex: 1;
@@ -116,7 +107,7 @@
         background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
       }
 
-      /* Message Bubbles */
+      /* Bubbles */
       .msg {
         padding: 10px;
         border-radius: 12px;
@@ -137,19 +128,6 @@
         border-top-left-radius: 2px;
       }
 
-      /* Reactions */
-      .reaction-container {
-        position: absolute;
-        bottom: -12px;
-        left: 5px;
-        background: white;
-        border-radius: 10px;
-        padding: 1px 4px;
-        font-size: 12px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        display: flex;
-        gap: 2px;
-      }
       .reaction-picker {
         position: absolute;
         top: -45px;
@@ -162,16 +140,17 @@
         gap: 8px;
         z-index: 60;
       }
-      .reaction-picker span {
-        cursor: pointer;
-        font-size: 20px;
-        transition: transform 0.1s;
-      }
-      .reaction-picker span:hover {
-        transform: scale(1.3);
+      .reaction-container {
+        position: absolute;
+        bottom: -12px;
+        left: 5px;
+        background: white;
+        border-radius: 10px;
+        padding: 1px 4px;
+        font-size: 12px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
       }
 
-      /* Input Area */
       #input-area {
         background: #f0f0f0;
         padding: 10px;
@@ -187,28 +166,19 @@
         outline: none;
       }
       .btn-round {
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         border: none;
-        font-size: 20px;
         cursor: pointer;
       }
-      #micBtn {
-        background: white;
-        color: #555;
-      }
-      #micBtn.recording {
-        background: #ff4b2b;
-        color: white;
+      .recording {
+        background: #ff4b2b !important;
+        color: white !important;
         animation: pulse 1s infinite;
-      }
-      #sendBtn {
-        background: var(--wa-green);
-        color: white;
       }
 
       @keyframes pulse {
@@ -221,10 +191,6 @@
         100% {
           opacity: 1;
         }
-      }
-      audio {
-        height: 35px;
-        width: 180px;
       }
     </style>
   </head>
@@ -242,38 +208,68 @@
             color: white;
             border: none;
             border-radius: 10px;
+            font-weight: bold;
           "
         >
-          Enter
+          ENTER HOUSE
         </button>
       </div>
     </div>
 
     <div id="lobby-screen" style="display: none">
-      <div class="card" style="padding: 0; overflow: hidden; width: 95%">
+      <div
+        class="card"
+        style="padding: 0; overflow: hidden; width: 95%; max-height: 80vh"
+      >
         <div
           style="
             background: var(--wa-green);
             color: white;
             padding: 15px;
             text-align: left;
+            display: flex;
+            justify-content: space-between;
           "
         >
-          <h3 style="margin: 0">Family Status</h3>
+          <h3 style="margin: 0">Family Hub</h3>
+          <span
+            id="my-name-display"
+            style="font-size: 12px; opacity: 0.8"
+          ></span>
         </div>
-        <div id="contact-list"></div>
+        <div id="contact-list" style="overflow-y: auto"></div>
       </div>
     </div>
 
     <div id="chat-interface">
       <div id="chat-header">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <button
+            onclick="backToLobby()"
+            style="
+              background: none;
+              border: none;
+              color: white;
+              font-size: 24px;
+            "
+          >
+            ←
+          </button>
+          <span id="chat-title" style="font-weight: bold">Chat</span>
+        </div>
         <button
-          onclick="backToLobby()"
-          style="background: none; border: none; color: white; font-size: 24px"
+          id="admin-clean-btn"
+          style="
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            display: none;
+          "
+          onclick="secureClearHistory()"
         >
-          ←
+          🧹
         </button>
-        <span id="chat-title" style="font-weight: bold">Chat</span>
       </div>
       <div id="chat-box"></div>
       <div id="input-area">
@@ -284,11 +280,23 @@
             style="display: none"
             onchange="uploadFile(this, 'image')"
         /></label>
-        <input type="text" id="msgInput" placeholder="Message" />
-        <button id="micBtn" class="btn-round" onclick="toggleRecording()">
+        <input type="text" id="msgInput" placeholder="Message..." />
+        <button
+          id="micBtn"
+          class="btn-round"
+          onclick="toggleRecording()"
+          style="background: white; font-size: 18px"
+        >
           🎙️
         </button>
-        <button id="sendBtn" class="btn-round" onclick="sendText()">➤</button>
+        <button
+          id="sendBtn"
+          class="btn-round"
+          onclick="sendText()"
+          style="background: var(--wa-green); color: white"
+        >
+          ➤
+        </button>
       </div>
     </div>
 
@@ -307,11 +315,11 @@
         limitToLast,
       } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+      // CONFIG: PASTE YOUR FIREBASE DETAILS HERE
       const firebaseConfig = {
-        apiKey: "AIzaSyAV3pyiwrB0Cf4e4RxLyATu-i9qnWzX1kY",
-        databaseURL:
-          "https://sibling-help-app-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "sibling-help-app",
+        apiKey: "YOUR_API_KEY",
+        databaseURL: "YOUR_DB_URL",
+        projectId: "YOUR_PROJECT_ID",
       };
 
       const app = initializeApp(firebaseConfig);
@@ -331,24 +339,31 @@
         const id = document.getElementById("idInput").value.toUpperCase();
         if (users[id]) {
           myName = users[id];
+          document.getElementById("my-name-display").innerText = myName;
           document.getElementById("login-screen").style.display = "none";
           document.getElementById("lobby-screen").style.display = "flex";
+
+          // --- ADMIN BUTTON LOCK ---
+          if (myName === "Akash") {
+            document.getElementById("admin-clean-btn").style.display = "block";
+          }
+
           setupStatus();
           renderLobby();
+        } else {
+          alert("Access Denied.");
         }
       };
 
-      // --- STATUS SYSTEM ---
       function setupStatus() {
         const myStatusRef = ref(db, `status/${myName}`);
-        const connectedRef = ref(db, ".info/connected");
-        onValue(connectedRef, (snap) => {
+        onValue(ref(db, ".info/connected"), (snap) => {
           if (snap.val() === true) {
-            onDisconnect(myStatusRef).set("offline");
-            update(myStatusRef, {
-              state: "online",
+            onDisconnect(myStatusRef).update({
+              state: "offline",
               lastSeen: serverTimestamp(),
             });
+            update(myStatusRef, { state: "online" });
           }
         });
       }
@@ -365,19 +380,54 @@
             row.className = "contact-row";
             row.onclick = () => startChat([myName, u].sort().join("_"), u);
             row.innerHTML = `<span id="dot-${u}" class="status-dot offline"></span>
-                                    <div class="contact-info">${u}</div>
-                                    <span id="badge-${u}" class="badge" style="display:none">0</span>`;
+                                    <div class="contact-info">${u}</div>`;
             list.appendChild(row);
 
             onValue(ref(db, `status/${u}`), (s) => {
               const dot = document.getElementById(`dot-${u}`);
-              if (s.val()?.state === "online")
-                dot.className = "status-dot online";
-              else dot.className = "status-dot offline";
+              if (dot)
+                dot.className = `status-dot ${s.val()?.state === "online" ? "online" : "offline"}`;
             });
           }
         });
       }
+
+      // --- THE "FORT KNOX" CLEANER ---
+      window.secureClearHistory = () => {
+        // LAYER 1: HARD IDENTITY LOCK
+        if (myName !== "Akash") {
+          alert("Security Error: Only Akash has Admin Clear privileges.");
+          return;
+        }
+
+        // LAYER 2: ROOM MEMBERSHIP LOCK
+        // Check if Akash is part of the current room name
+        if (!currentRoom.includes("Akash") && currentRoom !== "Family_Group") {
+          alert(
+            "Restricted: You can only clear your own chats or the Family Group.",
+          );
+          return;
+        }
+
+        // LAYER 3: SECRET ID CHALLENGE
+        const verify = prompt(
+          "ADMIN ACTION: To wipe this chat, enter your Secret ID (A30):",
+        );
+
+        if (verify === "A30") {
+          if (
+            confirm(
+              "Are you sure? This deletes ALL messages for ALL users in this room.",
+            )
+          ) {
+            remove(ref(db, `chats/${currentRoom}`))
+              .then(() => alert("Chat History Wiped! 🧹"))
+              .catch((err) => alert("Wipe failed: " + err.message));
+          }
+        } else {
+          alert("Wipe Cancelled: Incorrect ID.");
+        }
+      };
 
       // --- VOICE MESSAGES ---
       window.toggleRecording = async () => {
@@ -404,7 +454,6 @@
         }
       };
 
-      // --- CORE CHAT ---
       window.startChat = (room, title) => {
         currentRoom = room;
         document.getElementById("chat-title").innerText = title;
@@ -438,12 +487,13 @@
           timestamp: Date.now(),
           seen: false,
         });
+        if (navigator.vibrate) navigator.vibrate(40);
       }
 
       function listenMessages() {
         const box = document.getElementById("chat-box");
         onValue(
-          query(ref(db, `chats/${currentRoom}`), limitToLast(30)),
+          query(ref(db, `chats/${currentRoom}`), limitToLast(50)),
           (snap) => {
             box.innerHTML = "";
             const data = snap.val();
@@ -453,29 +503,27 @@
                 const div = document.createElement("div");
                 div.className = `msg ${m.sender === myName ? "me" : "them"}`;
 
-                // Add Reactions to UI
-                let reactionHtml = m.reactions
-                  ? `<div class="reaction-container">${Object.values(m.reactions).join("")}</div>`
-                  : "";
-
                 let content =
                   m.type === "text"
                     ? m.data
                     : m.type === "image"
                       ? `<img src="${m.data}" style="max-width:100%; border-radius:8px">`
                       : `<audio controls src="${m.data}"></audio>`;
+                let reacts = m.reactions
+                  ? `<div class="reaction-container">${Object.values(m.reactions).join("")}</div>`
+                  : "";
 
-                div.innerHTML = `<b style="font-size:10px">${m.sender}</b><br>${content}${reactionHtml}
+                div.innerHTML = `<b style="font-size:10px">${m.sender}</b><br>${content}${reacts}
                                      <div class="reaction-picker">
                                         <span onclick="react('${id}','❤️')">❤️</span><span onclick="react('${id}','😂')">😂</span><span onclick="react('${id}','👍')">👍</span>
                                      </div>`;
 
-                div.onclick = () => {
-                  const picker = div.querySelector(".reaction-picker");
-                  picker.style.display =
-                    picker.style.display === "flex" ? "none" : "flex";
+                div.onclick = (e) => {
+                  e.stopPropagation();
+                  const p = div.querySelector(".reaction-picker");
+                  p.style.display =
+                    p.style.display === "flex" ? "none" : "flex";
                 };
-
                 box.appendChild(div);
               });
             box.scrollTop = box.scrollHeight;
@@ -488,7 +536,6 @@
           [myName]: emoji,
         });
       };
-
       window.backToLobby = () => {
         document.getElementById("chat-interface").style.display = "none";
         document.getElementById("lobby-screen").style.display = "flex";
