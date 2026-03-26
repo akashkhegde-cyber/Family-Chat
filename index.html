@@ -31,8 +31,9 @@
         overflow: hidden;
       }
 
-      /* Login Screens */
-      #auth-container {
+      /* Screens */
+      #auth-container,
+      #settings-screen {
         position: fixed;
         inset: 0;
         background: #f0f2f5;
@@ -69,9 +70,10 @@
         border-radius: 12px;
         font-weight: bold;
         cursor: pointer;
+        margin-bottom: 10px;
       }
 
-      /* Chat UI */
+      /* Lobby & Chat */
       #lobby-screen,
       #chat-interface {
         display: none;
@@ -86,7 +88,8 @@
         align-items: center;
         cursor: pointer;
       }
-      #chat-header {
+      #chat-header,
+      .lobby-header {
         background: var(--wa-green);
         color: white;
         padding: 15px;
@@ -123,16 +126,6 @@
         background: white;
         border-top-left-radius: 4px;
       }
-      .msg-meta {
-        font-size: 11px;
-        opacity: 0.6;
-        text-align: right;
-        margin-top: 5px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 4px;
-      }
 
       #input-area {
         background: #f0f0f0;
@@ -151,10 +144,6 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-      }
-      .recording {
-        background: #ff4b2b !important;
-        color: white;
       }
     </style>
   </head>
@@ -185,9 +174,42 @@
       </div>
     </div>
 
+    <div id="settings-screen" style="display: none">
+      <div class="card">
+        <h2 style="color: var(--wa-green)">Account Settings</h2>
+        <p style="font-size: 14px; color: #666">Change your 4-digit PIN</p>
+        <input
+          type="number"
+          id="newPinInput"
+          placeholder="Enter New PIN"
+          pattern="\d*"
+          inputmode="numeric"
+        />
+        <button class="btn-main" onclick="updatePin()">SAVE NEW PIN</button>
+        <button
+          class="btn-main"
+          style="background: #888"
+          onclick="toggleSettings(false)"
+        >
+          CANCEL
+        </button>
+      </div>
+    </div>
+
     <div id="lobby-screen">
-      <div style="background: var(--wa-green); color: white; padding: 20px">
+      <div class="lobby-header">
         <h3 style="margin: 0">Family Hub</h3>
+        <button
+          onclick="toggleSettings(true)"
+          style="
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+          "
+        >
+          ⚙️
+        </button>
       </div>
       <div
         id="contact-list"
@@ -215,12 +237,7 @@
         >
           ←
         </button>
-        <div style="text-align: center">
-          <b id="chat-title">Chat</b>
-          <div id="typing-indicator" style="font-size: 10px; display: none">
-            typing...
-          </div>
-        </div>
+        <div style="text-align: center"><b id="chat-title">Chat</b></div>
         <button
           onclick="handleClear()"
           style="background: none; border: none; color: white; font-size: 24px"
@@ -236,15 +253,7 @@
             style="display: none"
             onchange="uploadFile(this)"
         /></label>
-        <input
-          type="text"
-          id="msgInput"
-          placeholder="Message..."
-          oninput="updateTypingStatus()"
-        />
-        <button id="micBtn" class="btn-round" onclick="toggleRecording()">
-          🎙️
-        </button>
+        <input type="text" id="msgInput" placeholder="Message..." />
         <button
           id="sendBtn"
           class="btn-round"
@@ -264,7 +273,6 @@
         onValue,
         update,
         remove,
-        onDisconnect,
         get,
       } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -285,11 +293,8 @@
       };
       let myName = "",
         currentRoom = "",
-        tempID = "",
-        mediaRecorder,
-        audioChunks = [];
+        tempID = "";
 
-      // Check persistent login
       window.onload = () => {
         const savedID = localStorage.getItem("fc_id");
         const savedPin = localStorage.getItem("fc_pin");
@@ -303,58 +308,50 @@
         const id = document.getElementById("idInput").value.toUpperCase();
         if (!users[id]) return alert("Invalid ID");
         tempID = id;
-
         const snapshot = await get(ref(db, `pins/${id}`));
-        const hasPin = snapshot.exists();
-
         document.getElementById("step-id").style.display = "none";
         document.getElementById("step-pin").style.display = "block";
-        document.getElementById("pin-title").innerText = hasPin
+        document.getElementById("pin-title").innerText = snapshot.exists()
           ? "Enter PIN"
           : "Setup PIN";
-        document.getElementById("pin-subtext").innerText = hasPin
-          ? `Enter PIN for ${users[id]}`
-          : `Create a 4-digit PIN for ${users[id]}`;
       };
 
       window.verifyPin = async (providedPin) => {
         const pin = providedPin || document.getElementById("pinInput").value;
         if (pin.length < 4) return alert("PIN must be 4 digits");
-
-        const pinRef = ref(db, `pins/${tempID}`);
-        const snapshot = await get(pinRef);
-
-        if (!snapshot.exists()) {
-          await update(ref(db, `pins`), { [tempID]: pin });
-          proceedLogin(pin);
-        } else if (snapshot.val() === pin) {
-          proceedLogin(pin);
+        const snapshot = await get(ref(db, `pins/${tempID}`));
+        if (!snapshot.exists() || snapshot.val() === pin) {
+          if (!snapshot.exists())
+            await update(ref(db, `pins`), { [tempID]: pin });
+          localStorage.setItem("fc_id", tempID);
+          localStorage.setItem("fc_pin", pin);
+          myName = users[tempID];
+          document.getElementById("auth-container").style.display = "none";
+          document.getElementById("lobby-screen").style.display = "flex";
+          renderLobby();
         } else {
           alert("Incorrect PIN!");
         }
       };
 
-      function proceedLogin(pin) {
-        localStorage.setItem("fc_id", tempID);
-        localStorage.setItem("fc_pin", pin);
-        myName = users[tempID];
-        document.getElementById("auth-container").style.display = "none";
-        document.getElementById("lobby-screen").style.display = "flex";
-        setupStatus();
-        renderLobby();
-      }
+      // --- NEW PIN UPDATE LOGIC ---
+      window.toggleSettings = (show) => {
+        document.getElementById("settings-screen").style.display = show
+          ? "flex"
+          : "none";
+      };
 
-      // --- REST OF THE APP LOGIC (Lobby, Chat, Broom, Voice) ---
-      function setupStatus() {
-        const sRef = ref(db, `status/${myName}`);
-        onValue(ref(db, ".info/connected"), (s) => {
-          if (s.val()) {
-            onDisconnect(sRef).set({ state: "offline" });
-            update(sRef, { state: "online" });
-          }
-        });
-      }
+      window.updatePin = async () => {
+        const newPin = document.getElementById("newPinInput").value;
+        if (newPin.length < 4) return alert("New PIN must be 4 digits");
+        const id = localStorage.getItem("fc_id");
+        await update(ref(db, `pins`), { [id]: newPin });
+        localStorage.setItem("fc_pin", newPin);
+        alert("PIN Updated Successfully!");
+        toggleSettings(false);
+      };
 
+      // --- CORE CHAT LOGIC ---
       function renderLobby() {
         const list = document.getElementById("contact-list");
         list.innerHTML = `<div class="contact-row" onclick="startChat('Family_Group', '🏠 Family Group')">🏠 Family Group</div>`;
@@ -363,14 +360,8 @@
             const row = document.createElement("div");
             row.className = "contact-row";
             row.onclick = () => startChat([myName, u].sort().join("_"), u);
-            row.innerHTML = `<span id="dot-${u}" style="width:10px;height:10px;border-radius:50%;margin-right:10px;background:#bbb;"></span>${u}`;
+            row.innerText = u;
             list.appendChild(row);
-            onValue(ref(db, `status/${u}`), (s) => {
-              const d = document.getElementById(`dot-${u}`);
-              if (d)
-                d.style.background =
-                  s.val()?.state === "online" ? "#25d366" : "#bbb";
-            });
           }
         });
       }
@@ -385,20 +376,10 @@
           box.innerHTML = "";
           const data = snap.val();
           if (data)
-            Object.keys(data).forEach((id) => {
-              const m = data[id];
-              if (m.sender !== myName && !m.seen)
-                update(ref(db, `chats/${room}/${id}`), { seen: true });
+            Object.values(data).forEach((m) => {
               const div = document.createElement("div");
               div.className = `msg ${m.sender === myName ? "me" : "them"}`;
-              let content =
-                m.type === "image"
-                  ? `<img src="${m.data}" style="width:100%; border-radius:8px">`
-                  : m.type === "voice"
-                    ? `<audio controls src="${m.data}" style="width:200px"></audio>`
-                    : m.data;
-              let ticks = m.sender === myName ? (m.seen ? "✓✓" : "✓") : "";
-              div.innerHTML = `<small>${m.sender}</small><br>${content}<div class="msg-meta">${m.time} ${ticks}</div>`;
+              div.innerHTML = `<small>${m.sender}</small><br>${m.data}`;
               box.appendChild(div);
             });
           box.scrollTop = box.scrollHeight;
@@ -417,50 +398,13 @@
         localStorage.clear();
         location.reload();
       };
-
-      // Send Logic
       document.getElementById("sendBtn").onclick = () => {
         const val = document.getElementById("msgInput").value;
         if (val) {
-          saveMsg({ type: "text", data: val });
+          push(ref(db, `chats/${currentRoom}`), { sender: myName, data: val });
           document.getElementById("msgInput").value = "";
         }
       };
-
-      window.toggleRecording = async () => {
-        const btn = document.getElementById("micBtn");
-        if (!mediaRecorder || mediaRecorder.state === "inactive") {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-          });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-          mediaRecorder.onstop = () => {
-            const reader = new FileReader();
-            reader.onloadend = () =>
-              saveMsg({ type: "voice", data: reader.result });
-            reader.readAsDataURL(new Blob(audioChunks));
-          };
-          mediaRecorder.start();
-          btn.classList.add("recording");
-        } else {
-          mediaRecorder.stop();
-          btn.classList.remove("recording");
-        }
-      };
-
-      function saveMsg(obj) {
-        push(ref(db, `chats/${currentRoom}`), {
-          ...obj,
-          sender: myName,
-          seen: false,
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        });
-      }
     </script>
   </body>
 </html>
